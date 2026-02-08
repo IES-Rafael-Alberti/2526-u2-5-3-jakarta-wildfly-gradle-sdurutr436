@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  wildfly:
+    image: quay.io/wildfly/wildfly:latest
+    container_name: wildfly
+    command: /opt/jboss/wildfly/bin/standalone.sh -b 0.0.0.0 -bmanagement 0.0.0.0
+    networks:
+      - backend
+    volumes:
+      - ./deployments:/opt/jboss/wildfly/standalone/deployments
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    depends_on:
+      - wildfly
+    networks:
+      - backend
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - nginx-logs:/var/log/nginx
+    restart: unless-stopped
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  nginx-logs:
